@@ -1,0 +1,6 @@
+/skillguard
+/dist/
+*.test
+/coverage.out
+/*.sarif
+.env
