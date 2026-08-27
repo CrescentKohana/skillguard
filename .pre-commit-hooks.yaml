@@ -1,0 +1,8 @@
+-
+  id: skillguard
+  name: SkillGuard
+  description: Scans AI-agent skill and configuration files for hidden instructions and supply-chain risks.
+  language: golang
+  entry: skillguard scan
+  pass_filenames: true
+  files: (^|/)((?i:SKILL\.md|AGENTS\.md)|\.kiro/steering/.*\.md|\.kiro/hooks/.*\.kiro\.hook|\.mcp\.json|mcp\.json|mcp_config\.json|claude_desktop_config\.json)$

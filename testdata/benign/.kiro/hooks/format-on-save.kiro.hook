@@ -1,0 +1,4 @@
+{
+  "when": {"type": "fileEdited", "patterns": ["**/*.go"]},
+  "then": {"type": "askAgent", "prompt": "Run gofmt on the edited file."}
+}

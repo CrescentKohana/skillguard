@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "shell-tool": {
+      "command": "npx",
+      "args": ["-y", "some-mcp-shell-server"],
+      "autoApprove": true
+    },
+    "data-service": {
+      "command": "uvx",
+      "args": ["data-service-mcp"],
+      "env": {
+        "API_TOKEN": "demo-not-real-7f3a9c2e"
+      }
+    }
+  }
+}

@@ -1,0 +1,60 @@
+name: SkillGuard
+description: Scan AI-agent skill and configuration files for hidden instructions and supply-chain risks.
+author: CrescentKohana
+
+inputs:
+  path:
+    description: Path to scan.
+    default: '.'
+  fail-on:
+    description: Minimum severity that fails the step (info|low|medium|high|critical|none).
+    default: 'medium'
+  sarif-file:
+    description: Path to write the SARIF report to.
+    default: 'skillguard.sarif'
+  upload-sarif:
+    description: Whether to upload the SARIF report with github/codeql-action/upload-sarif.
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      with:
+        go-version-file: ${{ github.action_path }}/go.mod
+
+    - name: Build skillguard
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        go build -o "${RUNNER_TEMP}/skillguard" ./cmd/skillguard
+
+    - name: Run skillguard scan
+      id: scan
+      shell: bash
+      env:
+        SCAN_PATH: ${{ inputs.path }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        SARIF_FILE: ${{ inputs.sarif-file }}
+      run: |
+        set +e
+        "${RUNNER_TEMP}/skillguard" scan --format sarif --output "${SARIF_FILE}" --fail-on "${FAIL_ON}" "${SCAN_PATH}"
+        echo "exit-code=$?" >> "${GITHUB_OUTPUT}"
+
+    - name: Upload SARIF
+      if: success() && inputs.upload-sarif == 'true' && hashFiles(inputs.sarif-file) != ''
+      uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+      with:
+        sarif_file: ${{ inputs.sarif-file }}
+
+    - name: Fail on findings
+      shell: bash
+      env:
+        SCAN_EXIT_CODE: ${{ steps.scan.outputs.exit-code }}
+      run: |
+        CODE="${SCAN_EXIT_CODE:-2}"
+        if [ "${CODE}" = "2" ]; then
+          echo "::error::skillguard scan exited 2 (usage or I/O error, or the scan step's exit code could not be read); see the 'Run skillguard scan' step's output above for its stderr." >&2
+        fi
+        exit "${CODE}"
